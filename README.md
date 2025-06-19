@@ -6,7 +6,7 @@
 
 ---
 
-1. [Project 1](https://github.com/Karrs725/NYCUS25-CSC/tree/master/HW1) - TLS Connection Hijacking
-2. [Project 2](https://github.com/Karrs725/NYCUS25-CSC/tree/master/HW2) - MITM and Pharming Attacks in Wi Fi Networks
-3. [Project 3](https://github.com/Karrs725/NYCUS25-CSC/tree/master/HW3) - Ransomware Propagation and Payload
-4. [Project 4](https://github.com/Karrs725/NYCUS25-CSC/tree/master/HW4) - Capture The Flag
+1. [Project 1](https://github.com/Karrs725/NYCU-S25-CSC/tree/master/HW1) - TLS Connection Hijacking
+2. [Project 2](https://github.com/Karrs725/NYCU-S25-CSC/tree/master/HW2) - MITM and Pharming Attacks in Wi Fi Networks
+3. [Project 3](https://github.com/Karrs725/NYCU-S25-CSC/tree/master/HW3) - Ransomware Propagation and Payload
+4. [Project 4](https://github.com/Karrs725/NYCU-S25-CSC/tree/master/HW4) - Capture The Flag
