@@ -1,4 +1,4 @@
-# NYCUS25-CSC
+# NYCU-S25-CSC
 
 - 課程名稱 Course Name：電腦安全總整與實作 Computer Security Capstone
 - 授課教師 Lecturer：李奇育
